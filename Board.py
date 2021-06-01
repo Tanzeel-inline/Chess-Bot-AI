@@ -526,20 +526,55 @@ class Board():
 		score = 0
 		enemy_score = 0
 
+		old_color = self.player_color
+
 		if color == "Black":
+			self.player_color = "Black"
 			negate(self.board_position)
+			score = self.evaluation_current()
+			negate(self.board_position)
+			self.player_color = "White"
+			enemy_score = self.evaluation_current()
+		else:
+			self.player_color = "White"
+			score = self.evaluation_current()
+			negate(self.board_position)
+			self.player_color = "Black"
+			enemy_score = self.evaluation_current()
+			negate(self.board_position)
+
+		self.player_color = old_color
+		
+		return score-enemy_score
+
+	def evaluation_current(self, color):
+		score = 0
 
 		for i in range(0, 8):
 			for j in range(0, 8):
 				if self.board_position[i][j] > 0:
 					score += self.weightage[self.board_position[i][j]]
-				elif self.board_position[i][j] < 0:
-					enemy_score += self.weightage[-self.board_position[i][j]]
-		
-		if color == "Black":
-			negate(self.board_position)
-		
-		return score-enemy_score
+
+		negate(self.board_position)
+		possible_moves = self.get_AI_moves()
+
+
+
+		for move in possible_moves:
+			source = [move[0][0], move[0][1]]
+			dest = [move[1][0], move[1][1]]
+			print(f"Source: {source}")
+			print(f"Destination: {dest}")
+			#Adding score for each possible move according to the piece's weightage
+			score += self.weightage[self.board_position[source[0], source[1]]]
+
+			#If that move has a target, considering that in the score as well
+			if self.board_position[dest[0], dest[1]] < 0:
+				score += self.weightage[-self.board_position[dest[0], dest[1]]]
+
+		return score
+
+	
 	#Check if we are in check state, that is our king can be attacked by one of the enemy piece
 	def evaluate_check(self):
 		check = False
@@ -725,7 +760,7 @@ def max_value(board, alpha, beta, depth):
 def minimax(board):
 	print(f"Called AI bot")
 	#Returns the best move for AI
-	best_score, movetodo = max_value(board, -math.inf, math.inf, 3)
+	best_score, movetodo = max_value(board, -math.inf, math.inf, 2)
 	print(f"Best Score: {best_score}")
 	if movetodo == None:
 		print("Fault in AI")

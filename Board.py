@@ -557,29 +557,20 @@ class Board():
 	def draw_board(self, main_screen):
 
 		#Colors
-		Black = (0,0,0)
+		Black = (57, 27, 5)
 		White = (255,255,255)
-		Cyan = (0,255,255)
-		Red = (255,0,0)
-		rectangle_outline_size = 53
+		Cyan = (13, 6, 0)
+		Red = (0, 255, 0)
+		rectangle_outline_size = 50
 		main_screen.fill(White)
 
-		#Draw the current selected box outline
-		#Since the rectangle of board are transparent they will not overwrite this outline
-		if self.selected_piece != None:
-			for x in range(4):
-				pg.draw.rect(main_screen, Cyan, ((self.selected_piece[1] * 50)-x,(self.selected_piece[0] * 50)-x,rectangle_outline_size,rectangle_outline_size), 1)
-			#Print all the valid moves of current box piece here
-			for i in range(len(self.selected_piece_moves)):
-				for x in range(4):
-					pg.draw.rect(main_screen, Red, ((self.selected_piece_moves[i][1] * 50)-x,(self.selected_piece_moves[i][0] * 50)-x,rectangle_outline_size,rectangle_outline_size), 1)
 		for i in range(0,8):
 			for j in range(0,8):
 				if i % 2 == 0 and j % 2 == 0:
 					#Drawing a transparent triangle, can make a single function
 					rectangle = pg.Rect(j * 50, i * 50, 50, 50)
 					shape_surf = pg.Surface(rectangle.size, pg.SRCALPHA)
-					shape_surf.set_alpha(128)
+					shape_surf.set_alpha(255)
 					pg.draw.rect(shape_surf, White, shape_surf.get_rect())
 					main_screen.blit(shape_surf, rectangle)
 					#Rectangle borders
@@ -594,7 +585,7 @@ class Board():
 					#main_screen.fill(White,pg.Rect(j * 50, i * 50, 50, 50))
 					rectangle = pg.Rect(j * 50, i * 50, 50, 50)
 					shape_surf = pg.Surface(rectangle.size, pg.SRCALPHA)
-					shape_surf.set_alpha(128)
+					shape_surf.set_alpha(255)
 					pg.draw.rect(shape_surf, White, shape_surf.get_rect())
 					main_screen.blit(shape_surf, rectangle)
 
@@ -607,7 +598,7 @@ class Board():
 					#main_screen.fill(Black,pg.Rect(j * 50, i * 50, 50, 50))
 					rectangle = pg.Rect(j * 50, i * 50, 50, 50)
 					shape_surf = pg.Surface(rectangle.size, pg.SRCALPHA)
-					shape_surf.set_alpha(128)
+					shape_surf.set_alpha(255)
 					pg.draw.rect(shape_surf, Black, shape_surf.get_rect())
 					main_screen.blit(shape_surf, rectangle)
 
@@ -615,6 +606,15 @@ class Board():
 					if self.board_position[i][j] != 0:
 						piece = pg.image.load(self.board_images[self.board_position[i][j]])
 						main_screen.blit(piece, ((j * 50) - 5, (i * 50) - 5))	
+		#Draw the current selected box outline
+		#Since the rectangle of board are transparent they will not overwrite this outline
+		if self.selected_piece != None:
+			for x in range(4):
+				pg.draw.rect(main_screen, Cyan, ((self.selected_piece[1] * 50)-x,(self.selected_piece[0] * 50)-x,rectangle_outline_size,rectangle_outline_size), 1)
+			#Print all the valid moves of current box piece here
+			for i in range(len(self.selected_piece_moves)):
+				for x in range(4):
+					pg.draw.rect(main_screen, Red, ((self.selected_piece_moves[i][1] * 50)-x,(self.selected_piece_moves[i][0] * 50)-x,rectangle_outline_size,rectangle_outline_size), 1)
 
 	def dead_king(self):
 		b_king, w_king = False, False

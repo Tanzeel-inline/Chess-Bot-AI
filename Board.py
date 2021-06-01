@@ -237,7 +237,7 @@ class Board():
 					moves.append(getUp(current_position))
 					if value == -1:
 						return moves
-				if current_position[0] == 6:
+				if current_position[0] == 6 and self.board_position[current_position[0] - 2][current_position[1]] == 0:
 					current_position = getUp(current_position)
 					#print(getUp(current_position))
 					possible, value = self.valid_path(getUp(current_position))
@@ -261,7 +261,7 @@ class Board():
 					moves.append(getDown(current_position))
 					if value == -1:
 						return moves
-				if current_position[0] == 1:
+				if current_position[0] == 1 and self.board_position[current_position[0] + 2][current_position[1]] == 0:
 					current_position = getDown(current_position)
 					#print(getUp(current_position))
 					possible, value = self.valid_path(getDown(current_position))

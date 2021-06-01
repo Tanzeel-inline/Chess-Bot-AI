@@ -39,7 +39,7 @@ class Board():
 		self.human_player = "White"
 		self.selected_piece = None
 		self.selected_piece_moves = None
-		self.weightage = {'King': 1000, 'Queen': 9, 'Rook': 5, 'Bishop': 3, 'Knight': 3, 'Pawn': 1}
+		self.weightage = {1: 1000, 2: 9, 5: 5, 3: 3, 4: 3, 6: 1}
 
 	def initialize_dictionary(self):
 		self.board_images[1] = "White_Pieces\wK.png"
@@ -209,29 +209,31 @@ class Board():
 		moves_straight = self.generate_rook_moves(current_position)
 		return moves_diagonal + moves_straight
 
+	def in_bounds(self, position):
+		if ( position[0] < 0 or position[0] > self.size - 1 ):
+			return False
+		elif ( position[1] < 0 or position[1] > self.size - 1 ):
+			return False
+		return True
 	def generate_pawn_moves(self, current_position,):
 		moves = []
 		if self.player_color == "White":
-
-			#Front position is occupied
-			temp_position = getUp(current_position)
-			if self.board_position[temp_position[0]][temp_position[1]] != 0:
-				#Check up left
-				temp_position = getUpLeft(current_position)
-				if self.board_position[temp_position[0]][temp_position[1]] != 0:
-					moves.append(getUpLeft(current_position))
-				#Check up right
-				temp_position = getUpRight(current_position)
-				if self.board_position[temp_position[0]][temp_position[1]] != 0:
-					moves.append(getUpRight(current_position))
+			#Check up left
+			temp_position = getUpLeft(current_position)
+			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] < 0:
+				moves.append(temp_position)
+			#Check up right
+			temp_position = getUpRight(current_position)
+			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] < 0:
+				moves.append(temp_position)
 			#Front position is empty
-			else:	
+			temp_position = getUp(current_position)
+			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] == 0:	
 				possible, value = self.valid_path(getUp(current_position))
 				if possible == True:
 					moves.append(getUp(current_position))
 					if value == -1:
 						return moves
-				
 				if current_position[0] == 6:
 					current_position = getUp(current_position)
 					#print(getUp(current_position))
@@ -239,27 +241,23 @@ class Board():
 					if possible == True:
 						moves.append(getUp(current_position))
 		else:
-			temp_position = getDown(current_position)
-
-			#Front position is occupied
-			if self.board_position[temp_position[0]][temp_position[1]] != 0:
-				#Check up left
-				temp_position = getDownLeft(current_position)
-				if self.board_position[temp_position[0]][temp_position[1]] != 0:
-					moves.append(getUpLeft(current_position))
-				#Check up right
-				temp_position = getDownRight(current_position)
-				if self.board_position[temp_position[0]][temp_position[1]] != 0:
-					moves.append(getUpRight(current_position))
+			#Check up left
+			temp_position = getDownLeft(current_position)
+			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] > 0:
+				moves.append(temp_position)
+			#Check up right
+			temp_position = getDownRight(current_position)
+			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] > 0:
+				moves.append(temp_position)
 			#Front position is empty
-			else:
+			temp_position = getDown(current_position)
+			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] == 0:
 				#print(getUp(current_position))
 				possible, value = self.valid_path(getDown(current_position))
 				if possible == True:
 					moves.append(getDown(current_position))
 					if value == -1:
 						return moves
-				
 				if current_position[0] == 1:
 					current_position = getDown(current_position)
 					#print(getUp(current_position))
@@ -558,6 +556,10 @@ class Board():
 		self.board_position[old_position[0]][old_position[1]] = 0
 
 		#Check here if the movement was of pawn, if it was pawn, did it move to the other possible least row, make the pawn queen
+		if self.board_position[new_position[0]][new_position[1]] == 6 and self.player_color == "White" and new_position[0] == 0:
+			self.board_position[new_position[0]][new_position[1]] = 2
+		elif self.board_position[new_position[0]][new_position[1]] == -6 and self.player_color == "Black" and new_position[0] == 7:
+			self.board_position[new_position[0]][new_position[1]] = -2
 	#Creates the copy of the board, will be required for bot
 	def copy_board(self):
 		new_board = Board(self.player_color)
@@ -575,6 +577,22 @@ class Board():
 					return [i,j]
 		return [-1,-1]
 
+	#Calculates the total score of the specified color pieces
+	def evaluation_score(self, color):
+		score = 0
+
+		if color == "Black":
+			negate(self.board_position)
+
+		for i in range(0, 8):
+			for j in range(0, 8):
+				if self.board_position[i][j] > 0:
+					score += self.weightage[self.board_position[i][j]]
+		
+		if color == "Black":
+			negate(self.board_position)
+		
+		return score
 	#Check if we are in check state, that is our king can be attacked by one of the enemy piece
 	def evaluate_check(self):
 		check = False
@@ -668,12 +686,17 @@ def main():
 	pg.display.set_icon(icon)
 	board = Board("White")
 	while True:
-		#main_screen.fill(White)
 		event = pg.event.poll()
 		if event.type == pg.QUIT:
 			break
 		if event.type == pg.MOUSEBUTTONUP:
-			#Checks if it's a check move
+				
+			score = board.evaluation_score("Black")
+			print(f"Black score is : {score}")
+			score = board.evaluation_score("White")
+			print(f"White score is : {score}")
+			#Checks if it's a ----check---- move
+			#So we can restrict current user movement
 			if board.evaluate_check() == True:
 				if board.check_movement() == False:
 					print(f"{board.player_color} got checkmate, {board.player_color} lost!!!!")

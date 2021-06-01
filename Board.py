@@ -484,6 +484,10 @@ class Board():
 			self.selected_piece_moves = None
 			#Update the player turn here, since one user has made the move
 			self.player_color = self.next_turn()
+		elif selected_box in possible_coordinates:
+			self.selected_piece_moves = self.generate_valid_path_list(selected_box)
+			self.selected_piece = selected_box
+			self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
 		else:
 			#Reset the click
 			self.selected_piece = None
@@ -661,7 +665,7 @@ class Board():
 #Not class functions
 #White is trying to minimize
 def min_value(board, alpha, beta, depth):
-	if board.endstate == True or depth == 0:
+	if board.endstate() == True or depth == 0:
 		return board.evaluation_score("White"), None
 	possible_moves = board.get_AI_moves()
 	if (len(possible_moves) <= 0 ):
@@ -684,7 +688,7 @@ def min_value(board, alpha, beta, depth):
 	return min_val, best_move
 #Black is tring to maximize
 def max_value(board, alpha, beta, depth):
-	if board.endstate == True or depth == 0:
+	if board.endstate() == True or depth == 0:
 		return board.evaluation_score("Black"), None
 	possible_moves = board.get_AI_moves()
 	if (len(possible_moves) <= 0 ):

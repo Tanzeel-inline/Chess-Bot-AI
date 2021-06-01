@@ -679,7 +679,8 @@ def min_value(board, alpha, beta, depth):
 	min_val = math.inf
 	#Iterating all moves
 	for move in possible_moves:
-		new_board = copy.deepcopy(board) #CHANGING THIS
+		#new_board = copy.deepcopy(board) #CHANGING THIS
+		new_board = board.copy_board()
 		new_board.AI_move(move[1],move[0])
 		new_board.player_color = "Black"
 		current_val = max_value(new_board,alpha,beta, depth - 1)[0]
@@ -705,7 +706,8 @@ def max_value(board, alpha, beta, depth):
 	best_move = possible_moves[0]
 	max_val = -math.inf
 	for move in possible_moves:
-		new_board = copy.deepcopy(board) #CHANGING THIS
+		#new_board = copy.deepcopy(board) #CHANGING THIS
+		new_board = board.copy_board()
 		new_board.AI_move(move[1],move[0])
 		new_board.player_color = "White"
 		current_val = min_value(new_board,alpha,beta, depth - 1)[0]

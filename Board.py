@@ -63,7 +63,7 @@ class Board():
 					  	[0,0,0,0,0,0,0,0],
 					  	[0,0,0,0,0,0,0,0],
 					  	[6,6,6,6,6,6,6,6],
-					  	[5,4,3,1,2,3,4,5]]
+					  	[5,4,3,2,1,3,4,5]]
 		self.board_position = np.array(board_position)
 	
 	#Checks validity of cell (True, 0), check if enemy lies there (True, -1)

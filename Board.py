@@ -660,8 +660,8 @@ class Board():
 
 #Not class functions
 #White is trying to minimize
-def min_value(board, alpha, beta):
-	if board.endstate == True:
+def min_value(board, alpha, beta, depth):
+	if board.endstate == True or depth == 0:
 		return board.evaluation_score("White"), None
 	possible_moves = board.get_AI_moves()
 	if (len(possible_moves) <= 0 ):
@@ -674,7 +674,7 @@ def min_value(board, alpha, beta):
 		new_board = board.copy_board()
 		new_board.AI_move(move[1],move[0])
 		new_board.player_color = "Black"
-		current_val = max_value(new_board,alpha,beta)[0]
+		current_val = max_value(new_board,alpha,beta, depth - 1)[0]
 		if current_val < min_val:
 			min_val = current_val
 			best_move = move
@@ -683,8 +683,8 @@ def min_value(board, alpha, beta):
 			break
 	return min_val, best_move
 #Black is tring to maximize
-def max_value(board, alpha, beta):
-	if board.endstate == True:
+def max_value(board, alpha, beta, depth):
+	if board.endstate == True or depth == 0:
 		return board.evaluation_score("Black"), None
 	possible_moves = board.get_AI_moves()
 	if (len(possible_moves) <= 0 ):
@@ -696,7 +696,7 @@ def max_value(board, alpha, beta):
 		new_board = board.copy_board()
 		new_board.AI_move(move[1],move[0])
 		new_board.player_color = "White"
-		current_val = min_value(new_board,alpha,beta)[0]
+		current_val = min_value(new_board,alpha,beta, depth - 1)[0]
 		if current_val < max_val:
 			max_val = current_val
 			best_move = move
@@ -707,7 +707,7 @@ def max_value(board, alpha, beta):
 def minimax(board):
 	print(f"Called AI bot")
 	#Returns the best move for AI
-	movetodo = max_value(board, math.inf, -math.inf)[1]
+	movetodo = max_value(board, math.inf, -math.inf, 10)[1]
 	if movetodo == None:
 		print("Fault in AI")
 		exit(-1)

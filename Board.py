@@ -22,7 +22,7 @@ def getDownRight(myPosition):
 def negate(board_position):
     for row in board_position:
         for i in range(len(row)):
-            row[i] = -row[i]
+            row[i] = -1 * row[i]
     return board_position
 
 class Board():
@@ -308,6 +308,71 @@ class Board():
 		
 		return moves
 	
+	def find_king(self, color):
+		if color == "Black":
+			for i in range (0, 8):
+				for j in range(0, 8):
+					if self.board_position[i][j] == -1:
+						return [i, j]
+		else:
+			for i in range (0, 8):
+				for j in range(0, 8):
+					if self.board_position[i][j] == 1:
+						return [i, j]
+	def get_all_moves(self):
+		moves = []
+		if self.player_color == "White":
+			for i in range(0, 8):
+				for j in range(0, 8):
+					if self.board_position[i][j] > 0:
+						moves += self.generate_valid_path_list([i,j])
+		else:
+			for i in range(0, 8):
+				for j in range(0, 8):
+					if self.board_position[i][j] < 0:
+						moves += self.generate_valid_path_list([i,j])
+		#print(f"All enemy moves are {moves}")
+		return moves
+	def check_movement(self) ->bool:
+		if self.player_color == "Black":
+			#Find black player king
+			#Check for its possible moves
+			King = self.find_king("Black")
+			KingMoves = self.generate_valid_path_list(King)
+			#print(f"All king moves are : {KingMoves}")
+			#Now iterate all enemy pieces and get their moves and check if any of the king move is countered by those moves, then remove that move from king move, if none move is left, then its checkmate from enemy
+			self.player_color = "White"
+			all_enemy_moves = self.get_all_moves()
+
+			for moves in reversed(KingMoves):
+				if moves in all_enemy_moves:
+					KingMoves.remove(moves)
+			self.player_color = "Black"
+			#if there is move left then player can move on that place only, change the selected piece to king and 
+			if len(KingMoves) > 0:
+				self.selected_piece = King
+				#print(f"King moves are {KingMoves}")
+				self.selected_piece_moves = KingMoves
+				return True
+		else:
+			#Find black player king
+			#Check for its possible moves
+			King = self.find_king("White")
+			KingMoves = self.generate_valid_path_list(King)
+			#Now iterate all enemy pieces and get their moves and check if any of the king move is countered by those moves, then remove that move from king move, if none move is left, then its checkmate from enemy
+			self.player_color = "Black"
+			all_enemy_moves = self.get_all_moves()
+
+			for moves in reversed(KingMoves):
+				if moves in all_enemy_moves:
+					KingMoves.remove(moves)
+			self.player_color = "White"
+			#if there is move left then player can move on that place only, change the selected piece to king and 
+			if len(KingMoves) > 0:
+				self.selected_piece = King
+				self.selected_piece_moves = KingMoves
+				return True
+		return False
 	def enemy_king(self, position):
 		if self.player_color == "White":
 			if self.board_position[position[0]][position[1]] == -1: 
@@ -316,6 +381,31 @@ class Board():
 			if self.board_position[position[0]][position[1]] == 1: 
 				return True
 		return False
+	def next_turn(self):
+		if self.player_color == "White":
+			return "Black"
+		return "White"
+	def check_selection(self):
+		pos = pg.mouse.get_pos()
+		#Human clicked while Ai is making its move
+		#Ignore the click
+		#if self.human_player != self.player_color:
+			#return False
+		
+		#Getting current box positions
+		#self.previous_selected_piece = self.selected_piece
+		selected_box = [-1, -1]
+		selected_box[1] = int(pos[0]/ 50)
+		selected_box[0] = int(pos[1]/ 50)
+
+		print(f"Pieces are {self.selected_piece_moves}")
+		if selected_box in self.selected_piece_moves:
+			#Move the piece
+			self.move_piece(selected_box, self.selected_piece)
+			#Reset the click
+			self.selected_piece = None
+			self.selected_piece_moves = None
+			self.player_color = self.next_turn()
 	#Piece movement operation
 	def selection_and_movement(self):
 
@@ -332,10 +422,6 @@ class Board():
 		selected_box[0] = int(pos[1]/ 50)
 		
 		if self.player_color == "White":
-			#Evaluate for check move here
-			#So if king is in danger generate its valid move and allow user to only move in one of the selected piece
-
-
 			#This code is for white piece
 			#New clicked, generate all possible moves from current position
 			#if self.previous_selected_piece == None:
@@ -361,10 +447,6 @@ class Board():
 				self.selected_piece = None
 				self.selected_piece_moves = None
 		else:
-			#Evaluate for check move here
-			#So if king is in danger generate its valid move and allow user to only move in one of the selected piece
-
-
 			#This code is for black piece
 			#New clicked, generate all possible moves from current position
 			#if self.previous_selected_piece == None:
@@ -408,24 +490,21 @@ class Board():
 					return [i,j]
 		return [-1,-1]
 	def evaluate_check(self):
-		#This functions checks if current player king is under attack then only allow king movement
 		check = False
 		if self.player_color == "Black":
-			negate(self.board_position)
-
-		king_position = self.get_king_position()
-		
-		for i in range(0, 8):
-			for j in range(0, 8):
-				if self.board_position[i][j] >= 0 :
-					continue
-				moves = self.generate_valid_path_list([i, j])
-				if king_position in moves:
-					check = True
-					break
-		
-		if self.player_color == "Black":
-			negate(self.board_position)
+			King = self.find_king("Black")
+			self.player_color = "White"
+			all_enemy_moves = self.get_all_moves()
+			if King in all_enemy_moves:
+				check = True
+			self.player_color = "Black"
+		else:
+			King = self.find_king("White")
+			self.player_color = "Black"
+			all_enemy_moves = self.get_all_moves()
+			if King in all_enemy_moves:
+				check = True
+			self.player_color = "White"
 		return check
 	def draw_board(self, main_screen):
 
@@ -506,14 +585,16 @@ def main():
 		if event.type == pg.QUIT:
 			break
 		if event.type == pg.MOUSEBUTTONUP:
-			if board.selection_and_movement() == True:
-				break
-			"""#Evaluating check for enemy
-			board.player_color = "Black"
+			#Checks if it's a check move
 			if board.evaluate_check() == True:
-				print("Black king is in danger")
-			board.player_color = "White"
-			"""
+				if board.check_movement() == False:
+					print(f"{board.player_color} got checkmate, {board.player_color} lost!!!!")
+					break
+				else:
+					board.check_selection()
+			#Simple move
+			elif board.selection_and_movement() == True:
+				break
 		board.draw_board(main_screen)
 		pg.display.flip()
 	pg.quit()

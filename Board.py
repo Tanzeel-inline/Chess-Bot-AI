@@ -308,15 +308,22 @@ class Board():
 		
 		return moves
 	
-
+	def enemy_king(self, position):
+		if self.player_color == "White":
+			if self.board_position[position[0]][position[1]] == -1: 
+				return True
+		else:
+			if self.board_position[position[0]][position[1]] == 1: 
+				return True
+		return False
 	#Piece movement operation
 	def selection_and_movement(self):
 
 		pos = pg.mouse.get_pos()
 		#Human clicked while Ai is making its move
 		#Ignore the click
-		if self.human_player != self.player_color:
-			return
+		#if self.human_player != self.player_color:
+			#return False
 		
 		#Getting current box positions
 		#self.previous_selected_piece = self.selected_piece
@@ -324,23 +331,65 @@ class Board():
 		selected_box[1] = int(pos[0]/ 50)
 		selected_box[0] = int(pos[1]/ 50)
 		
-		#New clicked, generate all possible moves from current position
-		#if self.previous_selected_piece == None:
-		if self.selected_piece == None and self.board_position[selected_box[0]][selected_box[1]] > 0:
-			self.selected_piece_moves = self.generate_valid_path_list(selected_box)
-			self.selected_piece = selected_box
-		#Previously selected piece and Newly selected piece is a valid move
-		elif self.selected_piece != None and selected_box in self.selected_piece_moves:
-			#Move the piece
-			self.move_piece(selected_box, self.selected_piece)
-			#Reset the click
-			self.selected_piece = None
-			self.selected_piece_moves = None
+		if self.player_color == "White":
+			#Evaluate for check move here
+			#So if king is in danger generate its valid move and allow user to only move in one of the selected piece
+
+
+			#This code is for white piece
+			#New clicked, generate all possible moves from current position
+			#if self.previous_selected_piece == None:
+			if self.selected_piece == None and self.board_position[selected_box[0]][selected_box[1]] > 0:
+				self.selected_piece_moves = self.generate_valid_path_list(selected_box)
+				self.selected_piece = selected_box
+			#Previously selected piece and Newly selected piece is a valid move
+			elif self.selected_piece != None and selected_box in self.selected_piece_moves:
+				#Check for checkmate
+				print(f"Selected box is {selected_box}")
+				if ( self.enemy_king(selected_box) == True):
+					print("Game ended, Black king died")
+					return True
+				#Move the piece
+				self.move_piece(selected_box, self.selected_piece)
+				#Reset the click
+				self.selected_piece = None
+				self.selected_piece_moves = None
+				#Update the player turn here, since one user has made the move
+				self.player_color = "Black"
+			else:
+				#Reset the click
+				self.selected_piece = None
+				self.selected_piece_moves = None
 		else:
-			#Reset the click
-			self.selected_piece = None
-			self.selected_piece_moves = None
-			
+			#Evaluate for check move here
+			#So if king is in danger generate its valid move and allow user to only move in one of the selected piece
+
+
+			#This code is for black piece
+			#New clicked, generate all possible moves from current position
+			#if self.previous_selected_piece == None:
+			if self.selected_piece == None and self.board_position[selected_box[0]][selected_box[1]] < 0:
+				self.selected_piece_moves = self.generate_valid_path_list(selected_box)
+				self.selected_piece = selected_box
+			#Previously selected piece and Newly selected piece is a valid move
+			elif self.selected_piece != None and selected_box in self.selected_piece_moves:
+				#Check for checkmate
+				print(f"Selected box is {selected_box}")
+				if ( self.enemy_king(selected_box) == True):
+					print("Game ended, White king died")
+					return True
+				#Move the piece
+				self.move_piece(selected_box, self.selected_piece)
+				#Reset the click
+				self.selected_piece = None
+				self.selected_piece_moves = None
+				#Update the player turn here, since one user has made the move
+				self.player_color = "White"
+			else:
+				#Reset the click
+				self.selected_piece = None
+				self.selected_piece_moves = None
+		return False	
 	def move_piece(self, new_position, old_position):
 		self.board_position[new_position[0]][new_position[1]] = self.board_position[old_position[0]][old_position[1]]
 		self.board_position[old_position[0]][old_position[1]] = 0
@@ -360,10 +409,11 @@ class Board():
 		return [-1,-1]
 	def evaluate_check(self):
 		#This functions checks if current player king is under attack then only allow king movement
+		check = False
 		if self.player_color == "Black":
 			negate(self.board_position)
 
-		king_position = get_king_position(self.board_position)
+		king_position = self.get_king_position()
 		
 		for i in range(0, 8):
 			for j in range(0, 8):
@@ -371,11 +421,12 @@ class Board():
 					continue
 				moves = self.generate_valid_path_list([i, j])
 				if king_position in moves:
-					return True
+					check = True
+					break
 		
 		if self.player_color == "Black":
 			negate(self.board_position)
-		return False
+		return check
 	def draw_board(self, main_screen):
 
 		#Colors
@@ -455,7 +506,14 @@ def main():
 		if event.type == pg.QUIT:
 			break
 		if event.type == pg.MOUSEBUTTONUP:
-			board.selection_and_movement()
+			if board.selection_and_movement() == True:
+				break
+			"""#Evaluating check for enemy
+			board.player_color = "Black"
+			if board.evaluate_check() == True:
+				print("Black king is in danger")
+			board.player_color = "White"
+			"""
 		board.draw_board(main_screen)
 		pg.display.flip()
 	pg.quit()

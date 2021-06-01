@@ -666,10 +666,9 @@ class Board():
 #White is trying to minimize
 def min_value(board, alpha, beta, depth):
 	if board.endstate() == True or depth == 0:
-		return board.evaluation_score("White"), None
+		score = board.evaluation_score("Black")
+		return score, None
 	possible_moves = board.get_AI_moves()
-	if (len(possible_moves) <= 0 ):
-		return board.evaluation_score("White"), None 
 	#A random start for best move
 	best_move = possible_moves[0]
 	min_val = math.inf
@@ -682,17 +681,17 @@ def min_value(board, alpha, beta, depth):
 		if current_val < min_val:
 			min_val = current_val
 			best_move = move
-		beta = min(beta, current_val)
-		if beta <= alpha:
-			break
+		#beta = min(beta, current_val)
+		#if beta <= alpha:
+			#break
 	return min_val, best_move
 #Black is tring to maximize
 def max_value(board, alpha, beta, depth):
 	if board.endstate() == True or depth == 0:
-		return board.evaluation_score("Black"), None
+		#print("In depth Max")
+		score = board.evaluation_score("Black")
+		return score, None
 	possible_moves = board.get_AI_moves()
-	if (len(possible_moves) <= 0 ):
-		return board.evaluation_score("Black"), None 
 	#A random start for best move
 	best_move = possible_moves[0]
 	max_val = -math.inf
@@ -704,14 +703,14 @@ def max_value(board, alpha, beta, depth):
 		if current_val < max_val:
 			max_val = current_val
 			best_move = move
-		alpha = max(alpha, current_val)
-		if alpha >= beta:
-			break
+		#alpha = max(alpha, current_val)
+		#if alpha >= beta:
+			#break
 	return max_val, best_move
 def minimax(board):
 	print(f"Called AI bot")
 	#Returns the best move for AI
-	movetodo = max_value(board, math.inf, -math.inf, 10)[1]
+	movetodo = max_value(board, math.inf, -math.inf, 3)[1]
 	if movetodo == None:
 		print("Fault in AI")
 		exit(-1)
@@ -746,6 +745,8 @@ def main():
 		if board.player_color == "Black":
 			# 	print(f"AI Moves are : {board.get_AI_moves()}")
 			minimax(board)
+			score = board.evaluation_score("Black")
+			print(f"Score is : {score}")
 			if board.endstate() == True:
 				break
 		board.draw_board(main_screen)

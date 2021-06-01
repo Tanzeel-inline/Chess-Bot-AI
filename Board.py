@@ -26,6 +26,8 @@ def negate(board_position):
             row[i] = -1 * row[i]
     return board_position
 
+DEBUGGING = 0
+
 class Board():
 	def __init__(self, current_player):
 		#self.screen_resolution = 400
@@ -522,6 +524,7 @@ class Board():
 	#Calculates the total score of the specified color pieces
 	def evaluation_score(self, color):
 		score = 0
+		enemy_score = 0
 
 		if color == "Black":
 			negate(self.board_position)
@@ -530,11 +533,13 @@ class Board():
 			for j in range(0, 8):
 				if self.board_position[i][j] > 0:
 					score += self.weightage[self.board_position[i][j]]
+				elif self.board_position[i][j] < 0:
+					enemy_score += self.weightage[-self.board_position[i][j]]
 		
 		if color == "Black":
 			negate(self.board_position)
 		
-		return score
+		return score-enemy_score
 	#Check if we are in check state, that is our king can be attacked by one of the enemy piece
 	def evaluate_check(self):
 		check = False
@@ -674,16 +679,20 @@ def min_value(board, alpha, beta, depth):
 	min_val = math.inf
 	#Iterating all moves
 	for move in possible_moves:
-		new_board = board.copy_board()
+		new_board = copy.deepcopy(board) #CHANGING THIS
 		new_board.AI_move(move[1],move[0])
 		new_board.player_color = "Black"
 		current_val = max_value(new_board,alpha,beta, depth - 1)[0]
+		if DEBUGGING == 1:
+			print(f"[min_value {depth}]: Score {current_val}")
 		if current_val < min_val:
 			min_val = current_val
 			best_move = move
-		#beta = min(beta, current_val)
-		#if beta <= alpha:
-			#break
+		if DEBUGGING == 1:
+			print(f"[min_value {depth}]: Score {current_val}")
+		beta = min(beta, current_val)
+		if beta <= alpha:
+			break
 	return min_val, best_move
 #Black is tring to maximize
 def max_value(board, alpha, beta, depth):
@@ -696,21 +705,26 @@ def max_value(board, alpha, beta, depth):
 	best_move = possible_moves[0]
 	max_val = -math.inf
 	for move in possible_moves:
-		new_board = board.copy_board()
+		new_board = copy.deepcopy(board) #CHANGING THIS
 		new_board.AI_move(move[1],move[0])
 		new_board.player_color = "White"
 		current_val = min_value(new_board,alpha,beta, depth - 1)[0]
-		if current_val < max_val:
+		if DEBUGGING == 1:
+			print(f"[max_value {depth}]: Score {current_val}")
+		if current_val > max_val:
 			max_val = current_val
 			best_move = move
-		#alpha = max(alpha, current_val)
-		#if alpha >= beta:
-			#break
+		if DEBUGGING == 1:
+			print(f"[max_value {depth}]: Best Score {max_val}")
+		alpha = max(alpha, current_val)
+		if alpha >= beta:
+			break
 	return max_val, best_move
 def minimax(board):
 	print(f"Called AI bot")
 	#Returns the best move for AI
-	movetodo = max_value(board, math.inf, -math.inf, 3)[1]
+	best_score, movetodo = max_value(board, -math.inf, math.inf, 3)
+	print(f"Best Score: {best_score}")
 	if movetodo == None:
 		print("Fault in AI")
 		exit(-1)

@@ -63,7 +63,7 @@ class Board():
 					  	[0,0,0,0,0,0,0,0],
 					  	[0,0,0,0,0,0,0,0],
 					  	[6,6,6,6,6,6,6,6],
-					  	[5,4,3,1,2,3,4,5]]
+					  	[5,4,3,2,1,3,4,5]]
 		self.board_position = np.array(board_position)
 	
 	#Checks validity of cell (True, 0), check if enemy lies there (True, -1)
@@ -212,34 +212,62 @@ class Board():
 	def generate_pawn_moves(self, current_position,):
 		moves = []
 		if self.player_color == "White":
-			#print(getUp(current_position))
-			possible, value = self.valid_path(getUp(current_position))
-			if possible == True:
-				moves.append(getUp(current_position))
-				if value == -1:
-					return moves
-			
-			if current_position[0] == 6:
-				current_position = getUp(current_position)
-				#print(getUp(current_position))
+
+			#Front position is occupied
+			temp_position = getUp(current_position)
+			if self.board_position[temp_position[0]][temp_position[1]] != 0:
+				#Check up left
+				temp_position = getUpLeft(current_position)
+				if self.board_position[temp_position[0]][temp_position[1]] != 0:
+					moves.append(getUpLeft(current_position))
+				#Check up right
+				temp_position = getUpRight(current_position)
+				if self.board_position[temp_position[0]][temp_position[1]] != 0:
+					moves.append(getUpRight(current_position))
+			#Front position is empty
+			else:	
 				possible, value = self.valid_path(getUp(current_position))
 				if possible == True:
 					moves.append(getUp(current_position))
+					if value == -1:
+						return moves
+				
+				if current_position[0] == 6:
+					current_position = getUp(current_position)
+					#print(getUp(current_position))
+					possible, value = self.valid_path(getUp(current_position))
+					if possible == True:
+						moves.append(getUp(current_position))
 		else:
-			#print(getUp(current_position))
-			possible, value = self.valid_path(getDown(current_position))
-			if possible == True:
-				moves.append(getDown(current_position))
-				if value == -1:
-					return moves
-			
-			if current_position[0] == 1:
-				current_position = getDown(current_position)
+			temp_position = getDown(current_position)
+
+			#Front position is occupied
+			if self.board_position[temp_position[0]][temp_position[1]] != 0:
+				#Check up left
+				temp_position = getDownLeft(current_position)
+				if self.board_position[temp_position[0]][temp_position[1]] != 0:
+					moves.append(getUpLeft(current_position))
+				#Check up right
+				temp_position = getDownRight(current_position)
+				if self.board_position[temp_position[0]][temp_position[1]] != 0:
+					moves.append(getUpRight(current_position))
+			#Front position is empty
+			else:
 				#print(getUp(current_position))
 				possible, value = self.valid_path(getDown(current_position))
 				if possible == True:
 					moves.append(getDown(current_position))
+					if value == -1:
+						return moves
+				
+				if current_position[0] == 1:
+					current_position = getDown(current_position)
+					#print(getUp(current_position))
+					possible, value = self.valid_path(getDown(current_position))
+					if possible == True:
+						moves.append(getDown(current_position))
 		return moves
+	
 	def generate_knight_moves(self, current_position):
 		moves = []
 
@@ -273,6 +301,12 @@ class Board():
 			moves.append(getRight(getDown(getDown(current_position))))
 
 		return moves
+
+	"""Takes the coordiante as input, checks if coordinate piece 
+	matches the current player color value, that is if 
+	player_color is Black, then checks if piece is negative, then
+	generates its move, vice versa for white player, 
+	-----player_color is crucial here----------------""" 
 	def generate_valid_path_list(self, current_position):
 		#"White" represents positive number
 		#"Black" represents negative number
@@ -292,6 +326,7 @@ class Board():
 				moves = self.generate_rook_moves(current_position)
 			elif piece == -6:
 				moves = self.generate_pawn_moves(current_position)
+			
 		else:
 			if piece == 1:
 				moves = self.generate_king_moves(current_position)
@@ -305,9 +340,33 @@ class Board():
 				moves = self.generate_rook_moves(current_position)
 			elif piece == 6:
 				moves = self.generate_pawn_moves( current_position)
-		
 		return moves
-	
+
+	#Takes the move list as input, check if any coordinate in move will cause check state, remove that coordinate and return the new moves list, needs to be called after we are generating move for any individual piece		
+	def remove_check_moves(self,current_position,moves):
+		for move in reversed(moves):
+			if self.bad_move(current_position, move) == True:
+				moves.remove(move)
+		return moves
+	#Takes the current position and new position as input, checks
+	#if movement from current position to new position causes our player to be in check state
+	#This function is called by remove check moves
+	#player_color dxetermines for which player we are checking check state
+	def bad_move(self, current, new):
+		current_piece = self.board_position[current[0]][current[1]]
+		new_piece = self.board_position[new[0]][new[1]]
+
+		#print(f"New position is : {new}")
+		check_move = False
+		self.move_piece(new, current)
+
+		check_move = self.evaluate_check()
+		self.board_position[current[0]][current[1]] = current_piece
+		self.board_position[new[0]][new[1]] = new_piece
+
+		return check_move
+
+	#Returns the corrdinate of specific color king
 	def find_king(self, color):
 		if color == "Black":
 			for i in range (0, 8):
@@ -319,6 +378,8 @@ class Board():
 				for j in range(0, 8):
 					if self.board_position[i][j] == 1:
 						return [i, j]
+	
+	#Returns all the possible moves for current player - White or Black
 	def get_all_moves(self):
 		moves = []
 		if self.player_color == "White":
@@ -331,8 +392,12 @@ class Board():
 				for j in range(0, 8):
 					if self.board_position[i][j] < 0:
 						moves += self.generate_valid_path_list([i,j])
-		#print(f"All enemy moves are {moves}")
 		return moves
+	
+	#Check condition movement---If we have check condition that means if our king is in danger this function checks whether we can make any move to save our king or not
+	#Returns true if we can
+	#Return false if we can't save our king, that is checkmate from enemy
+	#It only checks for valid king move, not for other pieces
 	def check_movement(self) ->bool:
 		if self.player_color == "Black":
 			#Find black player king
@@ -373,6 +438,10 @@ class Board():
 				self.selected_piece_moves = KingMoves
 				return True
 		return False
+	
+	#Check if there is enemy king on parameter position
+	#Return trues if there is
+	#Returns false if there isn't
 	def enemy_king(self, position):
 		if self.player_color == "White":
 			if self.board_position[position[0]][position[1]] == -1: 
@@ -381,10 +450,14 @@ class Board():
 			if self.board_position[position[0]][position[1]] == 1: 
 				return True
 		return False
+	#Updates the player_color
 	def next_turn(self):
 		if self.player_color == "White":
 			return "Black"
 		return "White"
+	#Check - selection --- This function only allows those movement which are anti-checks
+	#Inputs the user click coordinate
+	#if coordinate is of only allowed movement of kings (from check movement function then updates the position and set the turn to next player, else ignores the click)
 	def check_selection(self):
 		pos = pg.mouse.get_pos()
 		#Human clicked while Ai is making its move
@@ -407,6 +480,10 @@ class Board():
 			self.selected_piece_moves = None
 			self.player_color = self.next_turn()
 	#Piece movement operation
+	#This function is of user movement in board, check if user can made a valid move, we can remove else part code when bot is implemented, since we will be manually sticking to white color for human player, also uncomment the human """
+	# #if self.human_player != self.player_color:
+			#return False"""
+	#This will ignore any click from user
 	def selection_and_movement(self):
 
 		pos = pg.mouse.get_pos()
@@ -428,6 +505,7 @@ class Board():
 			if self.selected_piece == None and self.board_position[selected_box[0]][selected_box[1]] > 0:
 				self.selected_piece_moves = self.generate_valid_path_list(selected_box)
 				self.selected_piece = selected_box
+				self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
 			#Previously selected piece and Newly selected piece is a valid move
 			elif self.selected_piece != None and selected_box in self.selected_piece_moves:
 				#Check for checkmate
@@ -453,6 +531,7 @@ class Board():
 			if self.selected_piece == None and self.board_position[selected_box[0]][selected_box[1]] < 0:
 				self.selected_piece_moves = self.generate_valid_path_list(selected_box)
 				self.selected_piece = selected_box
+				self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
 			#Previously selected piece and Newly selected piece is a valid move
 			elif self.selected_piece != None and selected_box in self.selected_piece_moves:
 				#Check for checkmate
@@ -472,9 +551,14 @@ class Board():
 				self.selected_piece = None
 				self.selected_piece_moves = None
 		return False	
+	#Moves the piece from old_position to new positions, sets the old psoition to 0, perform any calculation if required here, since this function will overwrite the enemy piece in case
+	#Also pawn updation needs to be implemented here
 	def move_piece(self, new_position, old_position):
 		self.board_position[new_position[0]][new_position[1]] = self.board_position[old_position[0]][old_position[1]]
 		self.board_position[old_position[0]][old_position[1]] = 0
+
+		#Check here if the movement was of pawn, if it was pawn, did it move to the other possible least row, make the pawn queen
+	#Creates the copy of the board, will be required for bot
 	def copy_board(self):
 		new_board = Board(self.player_color)
 		for i in range (0, 8):
@@ -482,13 +566,16 @@ class Board():
 				new_board.board_position[i][j] = self.board_position[i][j]
 		new_board.selected_piece = self.selected_piece
 		new_board.selected_piece_moves = self.selected_piece_moves
-
+		return new_board
+	#Returns the white king position
 	def get_king_position(self):
 		for i in range(0, 8):
 			for j in range(0, 8):
 				if self.board_position[i][j] == 1:
 					return [i,j]
 		return [-1,-1]
+
+	#Check if we are in check state, that is our king can be attacked by one of the enemy piece
 	def evaluate_check(self):
 		check = False
 		if self.player_color == "Black":
@@ -506,6 +593,7 @@ class Board():
 				check = True
 			self.player_color = "White"
 		return check
+	#Function that draws the screen
 	def draw_board(self, main_screen):
 
 		#Colors

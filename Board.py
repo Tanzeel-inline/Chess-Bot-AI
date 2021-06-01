@@ -2,6 +2,7 @@
 import pygame as pg
 import numpy as np
 import copy
+import math
 
 def getUp(myPosition):
 	return [myPosition[0] - 1, myPosition[1]]
@@ -456,8 +457,8 @@ class Board():
 		pos = pg.mouse.get_pos()
 		#Human clicked while Ai is making its move
 		#Ignore the click
-		#if self.human_player != self.player_color:
-			#return False
+		if self.human_player != self.player_color:
+			return False
 		
 		#Getting current box positions
 		#self.previous_selected_piece = self.selected_piece
@@ -465,63 +466,28 @@ class Board():
 		selected_box[1] = int(pos[0]/ 50)
 		selected_box[0] = int(pos[1]/ 50)
 		
-		if self.player_color == "White":
-
-			possible_coordinates = self.checkmate_state()
-			print(f"Possible coordinates are : {possible_coordinates}")
-			#This code is for white piece
-			#New clicked, generate all possible moves from current position
-			#if self.previous_selected_piece == None:
-			if self.selected_piece == None and selected_box in possible_coordinates:
-				self.selected_piece_moves = self.generate_valid_path_list(selected_box)
-				self.selected_piece = selected_box
-				self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
-			#Previously selected piece and Newly selected piece is a valid move
-			elif self.selected_piece != None and selected_box in self.selected_piece_moves:
-				#Check for checkmate
-				print(f"Selected box is {selected_box}")
-				if ( self.enemy_king(selected_box) == True):
-					print("Game ended, Black king died")
-					return True
-				#Move the piece
-				self.move_piece(selected_box, self.selected_piece)
-				#Reset the click
-				self.selected_piece = None
-				self.selected_piece_moves = None
-				#Update the player turn here, since one user has made the move
-				self.player_color = "Black"
-			else:
-				#Reset the click
-				self.selected_piece = None
-				self.selected_piece_moves = None
+		possible_coordinates = self.checkmate_state()
+		#print(f"Possible coordinates are :{possible_coordinates}")
+		#This code is for white piece
+		#New clicked, generate all possible moves from current position
+		#if self.previous_selected_piece == None:
+		if self.selected_piece == None and selected_box in possible_coordinates:
+			self.selected_piece_moves = self.generate_valid_path_list(selected_box)
+			self.selected_piece = selected_box
+			self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
+		#Previously selected piece and Newly selected piece is a valid move
+		elif self.selected_piece != None and selected_box in self.selected_piece_moves:
+			#Move the piece
+			self.move_piece(selected_box, self.selected_piece)
+			#Reset the click
+			self.selected_piece = None
+			self.selected_piece_moves = None
+			#Update the player turn here, since one user has made the move
+			self.player_color = self.next_turn()
 		else:
-			#This code is for black piece
-			possible_coordinates = self.checkmate_state()
-			#New clicked, generate all possible moves from current position
-			#if self.previous_selected_piece == None:
-			if self.selected_piece == None and selected_box in possible_coordinates:
-				self.selected_piece_moves = self.generate_valid_path_list(selected_box)
-				self.selected_piece = selected_box
-				self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
-			#Previously selected piece and Newly selected piece is a valid move
-			elif self.selected_piece != None and selected_box in self.selected_piece_moves:
-				#Check for checkmate
-				print(f"Selected box is {selected_box}")
-				if ( self.enemy_king(selected_box) == True):
-					print("Game ended, White king died")
-					return True
-				#Move the piece
-				self.move_piece(selected_box, self.selected_piece)
-				#Reset the click
-				self.selected_piece = None
-				self.selected_piece_moves = None
-				#Update the player turn here, since one user has made the move
-				self.player_color = "White"
-			else:
-				#Reset the click
-				self.selected_piece = None
-				self.selected_piece_moves = None
-		return False	
+			#Reset the click
+			self.selected_piece = None
+			self.selected_piece_moves = None	
 	#Moves the piece from old_position to new positions, sets the old psoition to 0, perform any calculation if required here, since this function will overwrite the enemy piece in case
 	#Also pawn updation needs to be implemented here
 	def move_piece(self, new_position, old_position):
@@ -549,7 +515,6 @@ class Board():
 				if self.board_position[i][j] == 1:
 					return [i,j]
 		return [-1,-1]
-
 	#Calculates the total score of the specified color pieces
 	def evaluation_score(self, color):
 		score = 0
@@ -646,6 +611,110 @@ class Board():
 					if self.board_position[i][j] != 0:
 						piece = pg.image.load(self.board_images[self.board_position[i][j]])
 						main_screen.blit(piece, ((j * 50) - 5, (i * 50) - 5))	
+
+	def dead_king(self):
+		b_king, w_king = False, False
+		for i in range(0, 8):
+			for j in range(0, 8):
+				if self.board_position[i][j] == 1:
+					w_king = True
+				elif self.board_position[i][j] == -1:
+					b_king = True
+		return b_king, w_king
+	def endstate(self):
+		if self.stalemate_state() == "True":
+			print(f"No possible move for {self.player_color} player, GAME DRAWN!!!!")
+			return True
+		elif self.checkmate_state() == []:
+			print(f"{self.player_color} player got Checked-Mate!!!!")
+			return True
+		
+		b_king, w_king = self.dead_king()
+		if b_king == False:
+			print(f"White won, Black king died")
+			return True
+		elif w_king == False:
+			print(f"Black won, White knig died")
+			return True
+		return False
+	
+	def get_AI_moves(self):
+		possible_coordinates = self.checkmate_state()
+
+		all_possible_move_from_to = []
+		#For every piece
+		for coordinates in possible_coordinates:
+			#Generate its valid move
+			get_coordinate_moves = self.generate_valid_path_list(coordinates)
+			get_coordinate_moves = self.remove_check_moves(coordinates, get_coordinate_moves)
+			#Append the source and destination
+			for move in get_coordinate_moves:
+				from_to = []
+				from_to.append(coordinates)
+				from_to.append(move)
+				all_possible_move_from_to.append(from_to)
+		return all_possible_move_from_to
+
+	def AI_move(self, new_position, old_position):
+		self.move_piece(new_position, old_position)
+
+#Not class functions
+#White is trying to minimize
+def min_value(board, alpha, beta):
+	if board.endstate == True:
+		return board.evaluation_score("White"), None
+	possible_moves = board.get_AI_moves()
+	if (len(possible_moves) <= 0 ):
+		return board.evaluation_score("White"), None 
+	#A random start for best move
+	best_move = possible_moves[0]
+	min_val = math.inf
+	#Iterating all moves
+	for move in possible_moves:
+		new_board = board.copy_board()
+		new_board.AI_move(move[1],move[0])
+		new_board.player_color = "Black"
+		current_val = max_value(new_board,alpha,beta)[0]
+		if current_val < min_val:
+			min_val = current_val
+			best_move = move
+		beta = min(beta, current_val)
+		if beta <= alpha:
+			break
+	return min_val, best_move
+#Black is tring to maximize
+def max_value(board, alpha, beta):
+	if board.endstate == True:
+		return board.evaluation_score("Black"), None
+	possible_moves = board.get_AI_moves()
+	if (len(possible_moves) <= 0 ):
+		return board.evaluation_score("Black"), None 
+	#A random start for best move
+	best_move = possible_moves[0]
+	max_val = -math.inf
+	for move in possible_moves:
+		new_board = board.copy_board()
+		new_board.AI_move(move[1],move[0])
+		new_board.player_color = "White"
+		current_val = min_value(new_board,alpha,beta)[0]
+		if current_val < max_val:
+			max_val = current_val
+			best_move = move
+		alpha = max(alpha, current_val)
+		if alpha >= beta:
+			break
+	return max_val, best_move
+def minimax(board):
+	print(f"Called AI bot")
+	#Returns the best move for AI
+	movetodo = max_value(board, math.inf, -math.inf)[1]
+	if movetodo == None:
+		print("Fault in AI")
+		exit(-1)
+	else:
+		print(f"Returned move are : {movetodo[0]}, {movetodo[1]}")
+		board.move_piece(movetodo[1], movetodo[0])
+		board.player_color = "White"
 def main():
 
 	#Pygame variables
@@ -663,15 +732,18 @@ def main():
 		if event.type == pg.QUIT:
 			break
 		if event.type == pg.MOUSEBUTTONUP:
-			#Checks if it's a ----check---- move
-			#So we can restrict current user movement
-			#Simple move
-			if board.selection_and_movement() == True:
+
+				if board.player_color == "White":
+					board.selection_and_movement()
+					if board.endstate() == True:
+						break
+		board.draw_board(main_screen)
+		pg.display.flip()
+		if board.player_color == "Black":
+			# 	print(f"AI Moves are : {board.get_AI_moves()}")
+			minimax(board)
+			if board.endstate() == True:
 				break
-			if board.stalemate_state() == True:
-				print("Game drawn")
-			if board.checkmate_state() == []:
-				print(f"{self.player_color} got Checked-mate")
 		board.draw_board(main_screen)
 		pg.display.flip()
 	pg.quit()

@@ -530,47 +530,51 @@ class Board():
 
 		if color == "Black":
 			self.player_color = "Black"
-			negate(self.board_position)
-			score = self.evaluation_current()
-			negate(self.board_position)
+			score = self.evaluation_current(self.player_color)
 			self.player_color = "White"
-			enemy_score = self.evaluation_current()
+			enemy_score = self.evaluation_current(self.player_color)
 		else:
 			self.player_color = "White"
-			score = self.evaluation_current()
-			negate(self.board_position)
+			score = self.evaluation_current(self.player_color)
 			self.player_color = "Black"
-			enemy_score = self.evaluation_current()
-			negate(self.board_position)
-
+			enemy_score = self.evaluation_current(self.player_color)
 		self.player_color = old_color
-		
 		return score-enemy_score
 
 	def evaluation_current(self, color):
 		score = 0
 
+		if color == "Black":
+			negate(self.board_position)
+
 		for i in range(0, 8):
 			for j in range(0, 8):
 				if self.board_position[i][j] > 0:
 					score += self.weightage[self.board_position[i][j]]
-
-		negate(self.board_position)
+		
+		if color == "Black":
+			negate(self.board_position)
+		
 		possible_moves = self.get_AI_moves()
-
-
 
 		for move in possible_moves:
 			source = [move[0][0], move[0][1]]
 			dest = [move[1][0], move[1][1]]
-			print(f"Source: {source}")
-			print(f"Destination: {dest}")
+			#print(f"Source: {source}")
+			#print(f"Destination: {dest}")
 			#Adding score for each possible move according to the piece's weightage
-			score += self.weightage[self.board_position[source[0], source[1]]]
+			if self.player_color == "Black":
+				score += self.weightage[-self.board_position[source[0], source[1]]]
+			else:
+				score += self.weightage[self.board_position[source[0], source[1]]]
 
 			#If that move has a target, considering that in the score as well
-			if self.board_position[dest[0], dest[1]] < 0:
-				score += self.weightage[-self.board_position[dest[0], dest[1]]]
+			if self.player_color == "Black":
+				if self.board_position[dest[0], dest[1]] > 0:
+					score += self.weightage[self.board_position[dest[0], dest[1]]]
+			else:
+				if self.board_position[dest[0], dest[1]] < 0:
+					score += self.weightage[-self.board_position[dest[0], dest[1]]]
 
 		return score
 
@@ -685,6 +689,7 @@ class Board():
 	def get_AI_moves(self):
 		possible_coordinates = self.checkmate_state()
 
+		#print(f"Possible coordinates  are : {possible_coordinates}")
 		all_possible_move_from_to = []
 		#For every piece
 		for coordinates in possible_coordinates:

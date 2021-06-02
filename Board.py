@@ -780,7 +780,7 @@ class Board():
 		file_names = ['a','b','c','d','e','f','g','h']
 		pieces_names = {1:"King", 2:"Queen", 3:"Bishop", 4:"Knight", 5:"Rook", 6:"Pawn"}
 
-		print(f"[{self.player_color}]", end="")
+		print(f"[{self.player_color}]  ", end="")
 
 		if target_piece > 0:
 			print(f"{pieces_names[cur_piece]} takes {pieces_names[target_piece]} at {file_names[new_position[1]]}{8-new_position[0]}")

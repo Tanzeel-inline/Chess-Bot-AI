@@ -28,6 +28,23 @@ def negate(board_position):
 
 DEBUGGING = 0
 
+class Enpassant:
+	def __init__(self):
+		self.passant = False
+		self.new_coordinate = []
+		self.attackable_coordinate = []
+		self.my_color = None
+	def initate_enpassant(self, new_coordinate, attackable_coordinate, my_color):
+		self.passant = True
+		self.new_coordinate = new_coordinate
+		self.attackable_coordinate = attackable_coordinate
+		self.my_color = my_color
+	def copy_enpassant(self):
+		copy_make = Enpassant()
+		copy_make.passant = self.passant
+		copy_make.new_coordinate = self.new_coordinate
+		copy_make.attackable_coordinate = self.attackable_coordinate
+		copy_make.my_color = self.my_color
 class Board():
 	def __init__(self, current_player):
 		#self.screen_resolution = 400
@@ -43,7 +60,7 @@ class Board():
 		self.selected_piece = None
 		self.selected_piece_moves = None
 		self.weightage = {1: 1000, 2: 9, 5: 5, 3: 3, 4: 3, 6: 1}
-
+		self.en_passant = Enpassant()
 	def initialize_dictionary(self):
 		self.board_images[1] = "White_Pieces\wK.png"
 		self.board_images[2] = "White_Pieces\wQ.png"
@@ -497,6 +514,9 @@ class Board():
 	#Moves the piece from old_position to new positions, sets the old psoition to 0, perform any calculation if required here, since this function will overwrite the enemy piece in case
 	#Also pawn updation needs to be implemented here
 	def move_piece(self, new_position, old_position):
+
+		#Check for en passant
+
 		self.board_position[new_position[0]][new_position[1]] = self.board_position[old_position[0]][old_position[1]]
 		self.board_position[old_position[0]][old_position[1]] = 0
 
@@ -505,6 +525,7 @@ class Board():
 			self.board_position[new_position[0]][new_position[1]] = 2
 		elif self.board_position[new_position[0]][new_position[1]] == -6 and self.player_color == "Black" and new_position[0] == 7:
 			self.board_position[new_position[0]][new_position[1]] = -2
+		
 	#Creates the copy of the board, will be required for bot
 	def copy_board(self):
 		new_board = Board(self.player_color)

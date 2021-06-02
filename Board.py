@@ -3,6 +3,7 @@ import pygame as pg
 import numpy as np
 import copy
 import math
+import os
 
 def getUp(myPosition):
 	return [myPosition[0] - 1, myPosition[1]]
@@ -496,6 +497,8 @@ class Board():
 			self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
 		#Previously selected piece and Newly selected piece is a valid move
 		elif self.selected_piece != None and selected_box in self.selected_piece_moves:
+			self.print_move_done(self.selected_piece, selected_box)
+
 			#Move the piece
 			self.move_piece(selected_box, self.selected_piece)
 			#Reset the click
@@ -739,6 +742,20 @@ class Board():
 				all_possible_move_from_to.append(from_to)
 		return all_possible_move_from_to
 
+	def print_move_done(self, old_position, new_position):
+		cur_piece = abs(self.board_position[old_position[0]][old_position[1]])
+		target_piece = abs(self.board_position[new_position[0]][new_position[1]])
+
+		file_names = ['a','b','c','d','e','f','g','h']
+		pieces_names = {1:"King", 2:"Queen", 3:"Bishop", 4:"Knight", 5:"Rook", 6:"Pawn"}
+
+		print(f"[{self.player_color}]", end="")
+
+		if target_piece > 0:
+			print(f"{pieces_names[cur_piece]} takes {pieces_names[target_piece]} at {file_names[new_position[1]]}{8-new_position[0]}")
+		else:
+			print(f"{pieces_names[cur_piece]} to {file_names[new_position[1]]}{8-new_position[0]}")
+
 	def AI_move(self, new_position, old_position):
 		self.move_piece(new_position, old_position)
 
@@ -798,15 +815,16 @@ def max_value(board, alpha, beta, depth):
 			break
 	return max_val, best_move
 def minimax(board):
-	print(f"Called AI bot")
+	#print(f"Called AI bot")
 	#Returns the best move for AI
 	best_score, movetodo = max_value(board, -math.inf, math.inf, 2)
-	print(f"Best Score: {best_score}")
+	#print(f"Best Score: {best_score}")
 	if movetodo == None:
 		print("Fault in AI")
 		exit(-1)
 	else:
-		print(f"Returned move are : {movetodo[0]}, {movetodo[1]}")
+		#print(f"Returned move are : {movetodo[0]}, {movetodo[1]}")
+		board.print_move_done(movetodo[0], movetodo[1])
 		board.move_piece(movetodo[1], movetodo[0])
 		board.player_color = "White"
 def main():
@@ -814,6 +832,7 @@ def main():
 	#Pygame variables
 	screen_resolution = 400
 	pg.init()
+	os.system("cls")
 	main_screen = pg.display.set_mode((screen_resolution, screen_resolution))
 	#Setting caption
 	pg.display.set_caption("Chess-AI")
@@ -837,7 +856,7 @@ def main():
 			# 	print(f"AI Moves are : {board.get_AI_moves()}")
 			minimax(board)
 			score = board.evaluation_score("Black")
-			print(f"Score is : {score}")
+			#print(f"Score is : {score}")
 			if board.endstate() == True:
 				break
 		board.draw_board(main_screen)

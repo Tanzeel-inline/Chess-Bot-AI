@@ -243,9 +243,15 @@ class Board():
 			temp_position = getUpLeft(current_position)
 			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] < 0:
 				moves.append(temp_position)
+			#Checking for enpassant on diagnols
+			elif self.en_passant.passant == True and self.en_passant.my_color != self.player_color and temp_position == self.en_passant.attackable_coordinate:
+				moves.append(temp_position)
 			#Check up right
 			temp_position = getUpRight(current_position)
 			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] < 0:
+				moves.append(temp_position)
+			#Check for enpassant on diagnols
+			elif self.en_passant.passant == True and self.en_passant.my_color != self.player_color and temp_position == self.en_passant.attackable_coordinate:
 				moves.append(temp_position)
 			#Front position is empty
 			temp_position = getUp(current_position)
@@ -266,9 +272,15 @@ class Board():
 			temp_position = getDownLeft(current_position)
 			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] > 0:
 				moves.append(temp_position)
+			#Checking for enpassant on diagnols
+			elif self.en_passant.passant == True and self.en_passant.my_color != self.player_color and temp_position == self.en_passant.attackable_coordinate:
+				moves.append(temp_position)
 			#Check up right
 			temp_position = getDownRight(current_position)
 			if self.in_bounds(temp_position) and self.board_position[temp_position[0]][temp_position[1]] > 0:
+				moves.append(temp_position)
+			#Checking for enpassant on diagnols
+			elif self.en_passant.passant == True and self.en_passant.my_color != self.player_color and temp_position == self.en_passant.attackable_coordinate:
 				moves.append(temp_position)
 			#Front position is empty
 			temp_position = getDown(current_position)
@@ -377,7 +389,7 @@ class Board():
 
 		#print(f"New position is : {new}")
 		check_move = False
-		self.move_piece(new, current)
+		self.move_piece(new, current, True)
 
 		check_move = self.evaluate_check()
 		self.board_position[current[0]][current[1]] = current_piece
@@ -477,8 +489,8 @@ class Board():
 		pos = pg.mouse.get_pos()
 		#Human clicked while Ai is making its move
 		#Ignore the click
-		if self.human_player != self.player_color:
-			return False
+		#if self.human_player != self.player_color:
+			#return False
 		
 		#Getting current box positions
 		#self.previous_selected_piece = self.selected_piece
@@ -516,9 +528,27 @@ class Board():
 			self.selected_piece_moves = None	
 	#Moves the piece from old_position to new positions, sets the old psoition to 0, perform any calculation if required here, since this function will overwrite the enemy piece in case
 	#Also pawn updation needs to be implemented here
-	def move_piece(self, new_position, old_position):
+	def move_piece(self, new_position, old_position, dummy = False):
 
-		#Check for en passant
+		if dummy == False:
+			#Check for en passant
+			if self.player_color == "White" and self.board_position[old_position[0]][old_position[1]] == 6:
+				if old_position[0] - new_position[0] == 2:
+					self.en_passant.initate_enpassant(new_position, [new_position[0] + 1, new_position[1]], self.player_color)
+			elif self.player_color == "Black" and self.board_position[old_position[0]][old_position[1]] == -6:
+				if old_position[0] - new_position[0] == -2:
+					self.en_passant.initate_enpassant(new_position, [new_position[0] - 1, new_position[1]], self.player_color)
+
+			#If move killed en passant that is if en passant is true, current color is opposite to enpassant
+			#we moved on the attack coordinate of enpassant
+			if self.en_passant.passant == True and ( self.board_position[old_position[0]][old_position[1]] == -6 or self.board_position[old_position[0]][old_position[1]] == 6 ) and self.player_color != self.en_passant.my_color and new_position == self.en_passant.attackable_coordinate:
+				temp_position = self.en_passant.new_coordinate 
+				self.board_position[temp_position[0]][temp_position[1]] = 0
+				self.en_passant.passant = False
+			#if we didn't and enpassant is true, set enpassant to false
+			elif self.en_passant.passant == True and self.player_color != self.en_passant.my_color:
+				temp_position = self.en_passant.new_coordinate
+				self.en_passant.passant = False
 
 		self.board_position[new_position[0]][new_position[1]] = self.board_position[old_position[0]][old_position[1]]
 		self.board_position[old_position[0]][old_position[1]] = 0
@@ -537,6 +567,7 @@ class Board():
 				new_board.board_position[i][j] = self.board_position[i][j]
 		new_board.selected_piece = self.selected_piece
 		new_board.selected_piece_moves = self.selected_piece_moves
+		#Copy en passant here too
 		return new_board
 	#Returns the white king position
 	def get_king_position(self):
@@ -845,11 +876,10 @@ def main():
 		if event.type == pg.QUIT:
 			break
 		if event.type == pg.MOUSEBUTTONUP:
-
-				if board.player_color == "White":
-					board.selection_and_movement()
-					if board.endstate() == True:
-						break
+			if board.player_color == "White":
+				board.selection_and_movement()
+				if board.endstate() == True:
+					break
 		board.draw_board(main_screen)
 		pg.display.flip()
 		if board.player_color == "Black":

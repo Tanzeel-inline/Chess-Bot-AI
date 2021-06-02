@@ -550,7 +550,15 @@ class Board():
 		for i in range(0, 8):
 			for j in range(0, 8):
 				if self.board_position[i][j] > 0:
-					score += 2*self.weightage[self.board_position[i][j]]
+					score += 10*self.weightage[self.board_position[i][j]]
+
+		for i in range(0, 8):
+			for j in range(0, 8):
+				if self.board_position[i][j] == 1:
+					if color == "Black":
+						score += i
+					else:
+						score += 7-i
 		
 		if color == "Black":
 			negate(self.board_position)
@@ -564,9 +572,9 @@ class Board():
 			#print(f"Destination: {dest}")
 			#Adding score for each possible move according to the piece's weightage
 			if self.player_color == "Black":
-				score += self.weightage[-self.board_position[source[0], source[1]]]
+				score += self.weightage[-self.board_position[source[0], source[1]]] // 4
 			else:
-				score += self.weightage[self.board_position[source[0], source[1]]]
+				score += self.weightage[self.board_position[source[0], source[1]]] // 4
 
 			#If that move has a target, considering that in the score as well
 			if self.player_color == "Black":
@@ -574,13 +582,13 @@ class Board():
 					if self.weightage[self.board_position[dest[0], dest[1]]] != 1000:
 						score += self.weightage[self.board_position[dest[0], dest[1]]]
 					else:
-						score += 20
+						score += 10
 			else:
 				if self.board_position[dest[0], dest[1]] < 0:
 					if self.weightage[-self.board_position[dest[0], dest[1]]] != 1000:
 						score += self.weightage[-self.board_position[dest[0], dest[1]]]
 					else:
-						score += 20
+						score += 10
 
 		return score
 

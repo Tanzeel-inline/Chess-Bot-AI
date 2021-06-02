@@ -550,7 +550,7 @@ class Board():
 		for i in range(0, 8):
 			for j in range(0, 8):
 				if self.board_position[i][j] > 0:
-					score += self.weightage[self.board_position[i][j]]
+					score += 2*self.weightage[self.board_position[i][j]]
 		
 		if color == "Black":
 			negate(self.board_position)
@@ -571,10 +571,16 @@ class Board():
 			#If that move has a target, considering that in the score as well
 			if self.player_color == "Black":
 				if self.board_position[dest[0], dest[1]] > 0:
-					score += self.weightage[self.board_position[dest[0], dest[1]]]
+					if self.weightage[self.board_position[dest[0], dest[1]]] != 1000:
+						score += self.weightage[self.board_position[dest[0], dest[1]]]
+					else:
+						score += 20
 			else:
 				if self.board_position[dest[0], dest[1]] < 0:
-					score += self.weightage[-self.board_position[dest[0], dest[1]]]
+					if self.weightage[-self.board_position[dest[0], dest[1]]] != 1000:
+						score += self.weightage[-self.board_position[dest[0], dest[1]]]
+					else:
+						score += 20
 
 		return score
 

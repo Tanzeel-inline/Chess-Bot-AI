@@ -451,15 +451,17 @@ class Board():
 	#Returns the corrdinate of specific color king
 	def find_king(self, color):
 		if color == "Black":
-			for i in range (0, 8):
+			"""for i in range (0, 8):
 				for j in range(0, 8):
 					if self.board_position[i][j] == -1:
-						return [i, j]
+						return [i, j]"""
+			return self.black_pieces_positions[-1]
 		else:
-			for i in range (0, 8):
+			"""for i in range (0, 8):
 				for j in range(0, 8):
 					if self.board_position[i][j] == 1:
-						return [i, j]
+						return [i, j]"""
+			return self.white_pieces_positions[1]
 	
 	#Returns all the possible moves for current player - White or Black
 	def get_all_moves(self):
@@ -727,7 +729,7 @@ class Board():
 		
 		possible_moves = self.get_AI_moves()
 		if possible_moves == None:
-			return 0
+			return -1000
 	
 		for move in possible_moves:
 			source = [move[0][0], move[0][1]]

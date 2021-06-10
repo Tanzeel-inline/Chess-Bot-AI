@@ -466,6 +466,7 @@ class Board():
 	def checkmate_state(self):
 		count = 0
 		possible_moves = []
+		possible_changes = []
 		for i in range(0, 8):
 			for j in range(0, 8):
 
@@ -474,10 +475,13 @@ class Board():
 					getMoves = self.remove_check_moves([i, j], getMoves)
 					if len(getMoves) > 0:
 						count += 1
+						#Any index is current position
 						possible_moves.append([i, j])
+						#Corresponding index is possible positions
+						possible_changes.append(getMoves)
 		if count == 0 and self.evaluate_check() == True:
-			return []
-		return possible_moves
+			return None, None
+		return possible_moves,possible_changes
 
 	#Piece movement operation
 	#This function is of user movement in board, check if user can made a valid move, we can remove else part code when bot is implemented, since we will be manually sticking to white color for human player, also uncomment the human """
@@ -498,15 +502,15 @@ class Board():
 		selected_box[1] = int(pos[0]/ 50)
 		selected_box[0] = int(pos[1]/ 50)
 		
-		possible_coordinates = self.checkmate_state()
+		possible_coordinates,possible_positions = self.checkmate_state()
 		#print(f"Possible coordinates are :{possible_coordinates}")
 		#This code is for white piece
 		#New clicked, generate all possible moves from current position
 		#if self.previous_selected_piece == None:
 		if self.selected_piece == None and selected_box in possible_coordinates:
-			self.selected_piece_moves = self.generate_valid_path_list(selected_box)
+			self.selected_piece_moves = possible_positions[possible_coordinates.index(selected_box)]#self.generate_valid_path_list(selected_box)
 			self.selected_piece = selected_box
-			self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
+			#self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
 		#Previously selected piece and Newly selected piece is a valid move
 		elif self.selected_piece != None and selected_box in self.selected_piece_moves:
 			self.print_move_done(self.selected_piece, selected_box)
@@ -519,9 +523,9 @@ class Board():
 			#Update the player turn here, since one user has made the move
 			self.player_color = self.next_turn()
 		elif selected_box in possible_coordinates:
-			self.selected_piece_moves = self.generate_valid_path_list(selected_box)
+			self.selected_piece_moves = possible_positions[possible_coordinates.index(selected_box)]#self.generate_valid_path_list(selected_box)
 			self.selected_piece = selected_box
-			self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
+			#self.selected_piece_moves = self.remove_check_moves(self.selected_piece , self.selected_piece_moves)
 		else:
 			#Reset the click
 			self.selected_piece = None
@@ -619,7 +623,9 @@ class Board():
 			negate(self.board_position)
 		
 		possible_moves = self.get_AI_moves()
-
+		if possible_moves == None:
+			return 0
+	
 		for move in possible_moves:
 			source = [move[0][0], move[0][1]]
 			dest = [move[1][0], move[1][1]]
@@ -647,7 +653,6 @@ class Board():
 
 		return score
 
-	
 	#Check if we are in check state, that is our king can be attacked by one of the enemy piece
 	def evaluate_check(self):
 		check = False
@@ -739,32 +744,27 @@ class Board():
 					b_king = True
 		return b_king, w_king
 	def endstate(self):
+		possible_coordinates, possible_position = self.checkmate_state()
 		if self.stalemate_state() == "True":
 			print(f"No possible move for {self.player_color} player, GAME DRAWN!!!!")
 			return True
-		elif self.checkmate_state() == []:
+		elif possible_coordinates == None:
 			print(f"{self.player_color} player got Checked-Mate!!!!")
-			return True
-		
-		b_king, w_king = self.dead_king()
-		if b_king == False:
-			print(f"White won, Black king died")
-			return True
-		elif w_king == False:
-			print(f"Black won, White knig died")
 			return True
 		return False
 	
 	def get_AI_moves(self):
-		possible_coordinates = self.checkmate_state()
-
+		possible_coordinates,possible_positions = self.checkmate_state()
+		if possible_coordinates == None:
+			return None
 		#print(f"Possible coordinates  are : {possible_coordinates}")
 		all_possible_move_from_to = []
 		#For every piece
 		for coordinates in possible_coordinates:
 			#Generate its valid move
-			get_coordinate_moves = self.generate_valid_path_list(coordinates)
-			get_coordinate_moves = self.remove_check_moves(coordinates, get_coordinate_moves)
+			get_coordinate_moves = possible_positions[possible_coordinates.index(coordinates)]
+			#get_coordinate_moves = self.generate_valid_path_list(coordinates)
+			#get_coordinate_moves = self.remove_check_moves(coordinates, get_coordinate_moves)
 			#Append the source and destination
 			for move in get_coordinate_moves:
 				from_to = []

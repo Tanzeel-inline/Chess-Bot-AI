@@ -62,10 +62,6 @@ class Board():
 		self.selected_piece_moves = None
 		self.weightage = {1: 1000, 2: 9, 5: 5, 3: 3, 4: 3, 6: 1}
 		self.en_passant = Enpassant()
-		self.black_pieces_positions = dict()
-		self.white_pieces_positions = dict()
-		self.initialize_black_pieces_dictionary()
-		self.initialize_white_pieces_dictionary()
 	def initialize_dictionary(self):
 		self.board_images[1] = "White_Pieces\wK.png"
 		self.board_images[2] = "White_Pieces\wQ.png"
@@ -91,44 +87,6 @@ class Board():
 					  	[5,4,3,2,1,3,4,5]]
 		self.board_position = np.array(board_position)
 	
-	def initialize_black_pieces_dictionary(self):
-		self.black_pieces_positions[-6_1] = [1, 0]
-		self.black_pieces_positions[-6_2] = [1, 1]
-		self.black_pieces_positions[-6_3] = [1, 2]
-		self.black_pieces_positions[-6_4] = [1, 3]
-		self.black_pieces_positions[-6_5] = [1, 4]
-		self.black_pieces_positions[-6_6] = [1, 5]
-		self.black_pieces_positions[-6_7] = [1, 6]
-		self.black_pieces_positions[-6_8] = [1, 7]
-
-		self.black_pieces_positions[-5_1] = [0, 0]
-		self.black_pieces_positions[-5_2] = [0, 7]
-		self.black_pieces_positions[-4_1] = [0, 1]
-		self.black_pieces_positions[-4_2] = [0, 6]
-		self.black_pieces_positions[-3_1] = [0, 2]
-		self.black_pieces_positions[-3_2] = [0, 5]
-		self.black_pieces_positions[-2] = [0, 3]
-		self.black_pieces_positions[-1] = [0, 4]
-
-	def initialize_white_pieces_dictionary(self):
-		self.white_pieces_positions[6_1] = [6, 0]
-		self.white_pieces_positions[6_2] = [6, 1]
-		self.white_pieces_positions[6_3] = [6, 2]
-		self.white_pieces_positions[6_4] = [6, 3]
-		self.white_pieces_positions[6_5] = [6, 4]
-		self.white_pieces_positions[6_6] = [6, 5]
-		self.white_pieces_positions[6_7] = [6, 6]
-		self.white_pieces_positions[6_8] = [6, 7]
-
-		self.white_pieces_positions[5_1] = [7, 0]
-		self.white_pieces_positions[5_2] = [7, 7]
-		self.white_pieces_positions[4_1] = [7, 1]
-		self.white_pieces_positions[4_2] = [7, 6]
-		self.white_pieces_positions[3_1] = [7, 2]
-		self.white_pieces_positions[3_2] = [7, 5]
-		self.white_pieces_positions[2] = [7, 3]
-		self.white_pieces_positions[1] = [7, 4]
-
 	#Checks validity of cell (True, 0), check if enemy lies there (True, -1)
 	def valid_path(self, position):
 		if ( position[0] < 0 or position[0] > self.size - 1 ):
@@ -426,42 +384,31 @@ class Board():
 	#This function is called by remove check moves
 	#player_color dxetermines for which player we are checking check state
 	def bad_move(self, current, new):
-		#Save old positions here
 		current_piece = self.board_position[current[0]][current[1]]
 		new_piece = self.board_position[new[0]][new[1]]
-		
-		#Save the dictionary here
-		temp_white_dictionary = copy.deepcopy(self.white_pieces_positions)
-		temp_black_dictionary = copy.deepcopy(self.black_pieces_positions)  
 
+		#print(f"New position is : {new}")
 		check_move = False
 		self.move_piece(new, current, True)
 
 		check_move = self.evaluate_check()
-
-		#Update old positions here
 		self.board_position[current[0]][current[1]] = current_piece
 		self.board_position[new[0]][new[1]] = new_piece
 
-		#Reupdate the dictionary here
-		self.white_pieces_positions = copy.deepcopy(temp_white_dictionary)
-		self.black_pieces_positions = copy.deepcopy(temp_black_dictionary)
 		return check_move
 
 	#Returns the corrdinate of specific color king
 	def find_king(self, color):
 		if color == "Black":
-			"""for i in range (0, 8):
+			for i in range (0, 8):
 				for j in range(0, 8):
 					if self.board_position[i][j] == -1:
-						return [i, j]"""
-			return self.black_pieces_positions[-1]
+						return [i, j]
 		else:
-			"""for i in range (0, 8):
+			for i in range (0, 8):
 				for j in range(0, 8):
 					if self.board_position[i][j] == 1:
-						return [i, j]"""
-			return self.white_pieces_positions[1]
+						return [i, j]
 	
 	#Returns all the possible moves for current player - White or Black
 	def get_all_moves(self):
@@ -600,74 +547,22 @@ class Board():
 			#we moved on the attack coordinate of enpassant
 			if self.en_passant.passant == True and ( self.board_position[old_position[0]][old_position[1]] == -6 or self.board_position[old_position[0]][old_position[1]] == 6 ) and self.player_color != self.en_passant.my_color and new_position == self.en_passant.attackable_coordinate:
 				temp_position = self.en_passant.new_coordinate 
-				#Here update the dictionary in en passant case
-				if ( self.board_position[temp_position[0]][temp_position[1]] < 0 ):
-					for piece_value,position in self.black_pieces_positions.items():
-						if position == temp_position:
-							del self.black_pieces_positions[piece_value] 
-							break
-				elif ( self.board_position[temp_position[0]][temp_position[1]] > 0 ):
-					for piece_value,position in self.white_pieces_positions.items():
-						if position == temp_position:
-							del self.white_pieces_positions[piece_value]
-							break
 				self.board_position[temp_position[0]][temp_position[1]] = 0
-				
 				self.en_passant.passant = False
 			#if we didn't and enpassant is true, set enpassant to false
 			elif self.en_passant.passant == True and self.player_color != self.en_passant.my_color:
 				temp_position = self.en_passant.new_coordinate
 				self.en_passant.passant = False
-		
-		#Here update the dictionary
-		#Delete element on new position
-		if ( self.board_position[new_position[0]][new_position[1]] < 0 ):
-					for piece_value,position in self.black_pieces_positions.items():
-						if position == new_position:
-							del self.black_pieces_positions[piece_value] 
-							break
-		elif ( self.board_position[new_position[0]][new_position[1]] > 0 ):
-					for piece_value,position in self.white_pieces_positions.items():
-						if position == new_position:
-							del self.white_pieces_positions[piece_value]
-							break
-		#Update old position in dictionary
-		if ( self.board_position[old_position[0]][old_position[1]] < 0 ):
-				for piece_value,position in self.black_pieces_positions.items():
-						if position == old_position:
-							self.black_pieces_positions[piece_value] = new_position
-							break
-		elif ( self.board_position[old_position[0]][old_position[1]] > 0 ):
-				for piece_value,position in self.white_pieces_positions.items():
-						if position == old_position:
-							self.white_pieces_positions[piece_value] = new_position
-							break
-		#Update the board	
+
 		self.board_position[new_position[0]][new_position[1]] = self.board_position[old_position[0]][old_position[1]]
 		self.board_position[old_position[0]][old_position[1]] = 0
-		
 
 		#Check here if the movement was of pawn, if it was pawn, did it move to the other possible least row, make the pawn queen
 		if self.board_position[new_position[0]][new_position[1]] == 6 and self.player_color == "White" and new_position[0] == 0:
-			#Queen dictionary update
-			for piece_value,position in self.white_pieces_positions.items():
-						if position == new_position:
-							del self.white_pieces_positions[piece_value]
-							break
-			self.white_pieces_positions[2_2] = new_position
-			#Queen board update
 			self.board_position[new_position[0]][new_position[1]] = 2
-
 		elif self.board_position[new_position[0]][new_position[1]] == -6 and self.player_color == "Black" and new_position[0] == 7:
-			#Queen dictionary update
-			for piece_value,position in self.black_pieces_positions.items():
-						if position == new_position:
-							del self.black_pieces_positions[piece_value] 
-							break
-			self.black_pieces_positions[-2_2] = new_position
-			#Queen board update
 			self.board_position[new_position[0]][new_position[1]] = -2
-			
+		
 	#Creates the copy of the board, will be required for bot
 	def copy_board(self):
 		new_board = Board(self.player_color)
@@ -985,11 +880,8 @@ def main():
 				board.selection_and_movement()
 				if board.endstate() == True:
 					break
-				print("Dictionary after user move is : ")
-				print(board.white_pieces_positions)
 		board.draw_board(main_screen)
 		pg.display.flip()
-		
 		if board.player_color == "Black":
 			# 	print(f"AI Moves are : {board.get_AI_moves()}")
 			minimax(board)
@@ -997,11 +889,8 @@ def main():
 			#print(f"Score is : {score}")
 			if board.endstate() == True:
 				break
-			print("Dictionary after AI move is : ")
-			print(board.black_pieces_positions)
 		board.draw_board(main_screen)
 		pg.display.flip()
-		
 	pg.quit()
 main()
 # %%
